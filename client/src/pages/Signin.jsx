@@ -34,6 +34,7 @@ export default function Signin() {
         credentials: 'include',
       });
       const data = await res.json();
+      console.log(data);
 
       if (data.success) {
         dispatch(signInSuccess(data));

@@ -16,6 +16,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    profilePicture: {
+      type: String,
+      default:
+        'https://img.freepik.com/premium-wektory/zdjecie-profilowe-awatara-czlowieka-ilustracja-wektorowa_268834-538.jpg',
+    },
   },
   { timestamps: true }
 );
