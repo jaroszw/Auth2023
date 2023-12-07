@@ -11,8 +11,8 @@ const firebaseConfig = {
   appId: '1:266300166783:web:11330cc10ae608d278254a',
 };
 
-initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
+
 const auth = getAuth();
 const provider = new GoogleAuthProvider(auth);
-
 export const signInWithGooglePopup = () => signInWithPopup(auth, provider);

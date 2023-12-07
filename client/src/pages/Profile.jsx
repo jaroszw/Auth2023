@@ -1,17 +1,91 @@
 import { useSelector } from 'react-redux';
+import { useRef, useEffect, useState } from 'react';
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from 'firebase/storage';
+import { app } from '../firbase.js';
 
 export default function Profile() {
   const { currentUser } = useSelector((state) => state.user);
+  const [image, setImage] = useState(undefined);
+  const [imagePercent, setImagePercent] = useState(0);
+  const [imageError, setImageError] = useState(false);
+  const [formData, setFormData] = useState({});
+  const fileRef = useRef(null);
+
+  useEffect(() => {
+    if (image) {
+      imageHandler(image);
+    }
+  }, [image]);
+
+  const imageHandler = async (img) => {
+    if (!img) {
+      alert('Please choose a file first!');
+    }
+
+    const storage = getStorage(app);
+    const fileName = new Date().getTime() + img.name;
+    const storageRef = ref(storage, `/files/${fileName}`);
+    const uploadTask = uploadBytesResumable(storageRef, img);
+
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const percent = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
+        setImagePercent(percent);
+      },
+      (err) => {
+        console.log(err);
+        setImageError('true');
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadUrl) => {
+          setFormData({ ...formData, profilePicture: downloadUrl });
+        });
+      }
+    );
+  };
 
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
+
       <form className="flex flex-col gap-4">
+        <input
+          type="file"
+          ref={fileRef}
+          hidden
+          accept="image/*"
+          onChange={(e) => setImage(e.target.files[0])}
+        />
+
         <img
-          src={currentUser.profilePicture}
+          src={formData.profilePicture || currentUser.profilePicture}
           alt="profile"
           className="h-24 w-24 self-center cursor-pointer rounded-full object-cover"
+          onClick={() => fileRef.current.click()}
         />
+        <p className="text-sm self-center">
+          {imageError ? (
+            <span className="text-red-700">
+              Error uploading image (file must be less than 2 MB)
+            </span>
+          ) : imagePercent < 100 && imagePercent > 0 ? (
+            <span className="text-slate-700">
+              {`Uploading: ${imagePercent} %`}{' '}
+            </span>
+          ) : imagePercent === 100 ? (
+            <span className="text-green-700">Image uploaded successfuly</span>
+          ) : (
+            ''
+          )}
+        </p>
         <input
           defaultValue={currentUser.username}
           type="text"
