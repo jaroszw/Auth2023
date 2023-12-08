@@ -8,16 +8,17 @@ import {
 } from 'firebase/storage';
 import { app } from '../firbase.js';
 import {
-  signInFailure,
-  signInStart,
-  signInSuccess,
+  updateFailure,
+  updateStart,
+  updateSuccess,
 } from '../redux/user/userSlice.js';
 
 export default function Profile() {
-  const { currentUser } = useSelector((state) => state.user);
+  const { currentUser, loading, error } = useSelector((state) => state.user);
   const [image, setImage] = useState(undefined);
   const [imagePercent, setImagePercent] = useState(0);
   const [imageError, setImageError] = useState(false);
+  const [updateMessageSuccess, setupdateMessageSuccess] = useState(null);
   const [formData, setFormData] = useState({});
   const fileRef = useRef(null);
   const dispatch = useDispatch();
@@ -27,6 +28,10 @@ export default function Profile() {
       imageHandler(image);
     }
   }, [image]);
+
+  const formDataHandler = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
 
   const imageHandler = async (img) => {
     if (!img) {
@@ -61,7 +66,7 @@ export default function Profile() {
   const updateUserHanlder = async (e) => {
     e.preventDefault();
     try {
-      dispatch(signInStart());
+      dispatch(updateStart());
       const res = await fetch(
         `http://localhost:3000/api/user/update/${currentUser._id}`,
         {
@@ -74,16 +79,18 @@ export default function Profile() {
         }
       );
       const data = await res.json();
-      console.log(data);
-
-      if (data.success) {
-        // dispatch(signInSuccess(data));
-      } else {
-        console.dir(data);
-        // dispatch(signInFailure(data));
+      if (data.success === false) {
+        dispatch(updateFailure(data));
       }
+      dispatch(updateSuccess(data));
+      setupdateMessageSuccess(true);
+      setTimeout(() => {
+        setupdateMessageSuccess(false);
+      }, 2000);
     } catch (error) {
-      // dispatch(signInFailure(error));
+      setupdateMessageSuccess(false);
+      dispatch(updateFailure(error.message));
+      console.log(error);
     }
   };
 
@@ -127,6 +134,7 @@ export default function Profile() {
           id="username"
           placeholder="Username"
           className="bg-slate-100 rounded-lg p-3"
+          onChange={formDataHandler}
         />
         <input
           defaultValue={currentUser.email}
@@ -134,15 +142,20 @@ export default function Profile() {
           id="email"
           placeholder="Email"
           className="bg-slate-100 rounded-lg p-3"
+          onChange={formDataHandler}
         />
         <input
           type="password"
           id="password"
           placeholder="Password"
           className="bg-slate-100 rounded-lg p-3"
+          onChange={formDataHandler}
         />
-        <button className="bg-slate-700 text-white p-3 rounded-lg uppercase	font-bold hover:opacity-95 disabled-80 ">
-          Update user
+        <button
+          className="bg-slate-700 text-white p-3 rounded-lg uppercase	font-bold hover:opacity-95 disabled-80 "
+          disabled={loading}
+        >
+          {loading ? 'Updating' : 'Update'}
         </button>
       </form>
 
@@ -150,6 +163,12 @@ export default function Profile() {
         <span className="text-red-700 cursor-pointer">delete account</span>
         <span className="text-red-700 cursor-pointer">sign out</span>
       </div>
+      <p className="text-red-700 mt-5">
+        {error && 'Something went wrong, try again or fuck off'}
+      </p>
+      <p className="text-green-700 mt-5">
+        {updateMessageSuccess && 'User was updated succesfully'}
+      </p>
     </div>
   );
 }
