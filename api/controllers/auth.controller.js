@@ -15,6 +15,15 @@ export const signup = async (req, res, next) => {
   }
 };
 
+export const test = async (req, res, next) => {
+  const reqcookieHeader = req.headers.cookie.split('=')[1];
+  const reqCookie = req.cookies.access_token;
+  const bearer = req.headers.authorization;
+  const validUser = await User.findOne({ _id: req.user.id });
+
+  res.status(200).json({ message: 'request received' });
+};
+
 export const signin = async (req, res, next) => {
   const { email, password } = req.body;
   try {

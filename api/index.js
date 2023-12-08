@@ -3,9 +3,19 @@ import mongoose from 'mongoose';
 import userRoutes from './routes/user.route.js';
 import authRoutes from './routes/auth.route.js';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+
 import 'dotenv/config';
 
 const app = express();
+
+app.use(cookieParser());
+
+// app.use((req, res, next) => {
+//   // res.setHeader('Access-Control-Allow-Origin', ['http://localhost:5173']);
+//   // res.setHeader('Access-Control-Allow-Credentials', ['true']);
+//   next();
+// });
 
 mongoose
   .connect(process.env.MONGO)
@@ -20,7 +30,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173'],
     methods: ['GET', 'PUT', 'POST'],
     credentials: true,
   })

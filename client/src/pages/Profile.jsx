@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useRef, useEffect, useState } from 'react';
 import {
   getStorage,
@@ -7,6 +7,11 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 import { app } from '../firbase.js';
+import {
+  signInFailure,
+  signInStart,
+  signInSuccess,
+} from '../redux/user/userSlice.js';
 
 export default function Profile() {
   const { currentUser } = useSelector((state) => state.user);
@@ -15,6 +20,7 @@ export default function Profile() {
   const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({});
   const fileRef = useRef(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (image) {
@@ -52,11 +58,40 @@ export default function Profile() {
     );
   };
 
+  const updateUserHanlder = async (e) => {
+    e.preventDefault();
+    try {
+      dispatch(signInStart());
+      const res = await fetch(
+        `http://localhost:3000/api/user/update/${currentUser._id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+          credentials: 'include',
+        }
+      );
+      const data = await res.json();
+      console.log(data);
+
+      if (data.success) {
+        // dispatch(signInSuccess(data));
+      } else {
+        console.dir(data);
+        // dispatch(signInFailure(data));
+      }
+    } catch (error) {
+      // dispatch(signInFailure(error));
+    }
+  };
+
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
 
-      <form className="flex flex-col gap-4">
+      <form className="flex flex-col gap-4" onSubmit={updateUserHanlder}>
         <input
           type="file"
           ref={fileRef}
@@ -110,6 +145,7 @@ export default function Profile() {
           Update user
         </button>
       </form>
+
       <div className="flex justify-between mt-5">
         <span className="text-red-700 cursor-pointer">delete account</span>
         <span className="text-red-700 cursor-pointer">sign out</span>
